@@ -41,11 +41,12 @@ masesk::EasySocket easySocket; //or using namespace std;
     * channelName - string identifier of channel
     * ip - string for where the server resides (eg. 127.0.0.1 for local)
     * port - integer value of port use on server side (eg. 8080)
-* `void socketSend(std::string channelName,  std::string data)` - send data to server based on channel name
+* `void socketSend(const std::string &channelName,  const std::string &data)` - send data to server based on channel name
     * channelName: string identifier of channel
     * data: data to be sent through to the server on given channel
-* `void closeConnection(std::string channelName)`  - close connection with server using channel name
+* `void closeConnection(const std::string &channelName)`  - close connection with server using channel name
     * channelName: string identifier of channel
+
 
 
 ## Example
