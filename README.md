@@ -13,7 +13,7 @@ Modern C++ 11 native, OS agnostic, socket library/base code with a single header
 ## Requirements
 * C++ 11 and up
 
-## Namespace, Members, Functions
+## Namespace, Usecase, Members, Functions
 
 ### Import:
 ```
@@ -23,7 +23,45 @@ Modern C++ 11 native, OS agnostic, socket library/base code with a single header
 ### Namespace and Initialize
 
 ```
-masesk::EasySocket easySocket; //or using namespace std;
+masesk::EasySocket easySocket; //or using namespace masesk;
+```
+
+### Usecase
+
+* EasySocket wraps the code for the server and client, so that a single header can be used to initialize and start a server or a client.
+```
+//server example 
+
+#include <iostream>
+#include <masesk/EasySocket.hpp>
+using namespace std;
+using namespace masesk;
+
+void handleData(const std::string &data) {
+	cout << "Client sent: " + data << endl;
+}
+
+int main() {
+	EasySocket socketManager;
+	socketManager.socketListen("test", 8080, &handleData);
+	return 0;
+}
+```
+
+```
+// client example
+#include <iostream>
+#include <masesk/EasySocket.hpp>
+#include <string>
+using namespace std;
+using namespace masesk;
+int main() {
+	EasySocket socketManager;
+	socketManager.socketConnect("test", "127.0.0.1", 8080);
+	socketManager.socketSend("test", "Hello from client!");
+	socketManager.closeConnection("test");
+	return 0;
+}
 ```
 
 ### Functions
@@ -41,13 +79,41 @@ masesk::EasySocket easySocket; //or using namespace std;
     * channelName - string identifier of channel
     * ip - string for where the server resides (eg. 127.0.0.1 for local)
     * port - integer value of port use on server side (eg. 8080)
-* `void socketSend(const std::string &channelName,  const std::string &data)` - send data to server based on channel name
+* `void socketSend(std::string channelName,  std::string data)` - send data to server based on channel name
     * channelName: string identifier of channel
     * data: data to be sent through to the server on given channel
-* `void closeConnection(const std::string &channelName)`  - close connection with server using channel name
+* `void closeConnection(std::string channelName)`  - close connection with server using channel name
     * channelName: string identifier of channel
-
-
 
 ## Example
 Check `test/test-server` and `test/test-client` for a working client and server example running locally.
+
+### Build Tests on Windows
+1. Open `easy-socket.sln` in Visual Studio 2017
+2. Right click on `test-client`, select `properites`, and change `Windows SDK Version` to your installed 10.x
+3. Right click on `test-server`, select `properites`, and change `Windows SDK Version` to your installed 10.x
+4. Right click on ```Solution 'easy-socket' ``` and select `Rebuild entire solution`.
+5. Select desired `Configuration` (Debug/Release) and `Platform` (x64/Win32) from the top-bar dropdowns next to the start button.
+6. Executables will be available at `[x64 or Win32]/[Debug or Release]`
+
+### Build Tests on Linux
+
+Requirements: 
+* CMake (> v3.5)
+* make
+* g++ (> v6.1)
+
+```
+mkdir build
+```
+```
+cd build
+```
+```
+cmake ..
+```
+```
+make
+```
+
+Executables will be available at `build/tests/test-client/client` and `build/tests/test-client/server`
