@@ -3,7 +3,7 @@
 using namespace std;
 using namespace masesk;
 
-void handleData(std::string data) {
+void handleData(const std::string &data) {
 	cout << "Client sent: " + data << endl;
 }
 
