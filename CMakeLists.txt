@@ -52,8 +52,8 @@ install(
 )
 
 install(
-    DIRECTORY ${PROJECT_SOURCE_DIR}/include
-    DESTINATION include-${PROJECT_VERSION}
+    DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+    DESTINATION include
 )
 
   set(${PROJECT_NAME}_VERSION ${PROJECT_VERSION} CACHE INTERNAL "")
