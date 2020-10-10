@@ -2,5 +2,4 @@ add_executable( client
 	Client.cpp
 )
 
-include_directories(../../include
-)
+target_link_libraries(client easy-socket)

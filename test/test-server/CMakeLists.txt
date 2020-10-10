@@ -2,5 +2,4 @@ add_executable( server
 	Server.cpp
 )
 
-include_directories(../../include
-)
+target_link_libraries(server easy-socket)
