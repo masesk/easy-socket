@@ -19,21 +19,43 @@ const int SOCKET_ERROR = -1;
 #include <unordered_map>
 #include <atomic>
 #include <functional>
+#include <exception>
+
 
 namespace masesk {
 	const int BUFF_SIZE = 4096;
+	struct socket_error_exception : public std::exception
+	{
+		const char * what() const throw ()
+		{
+			return "Can't start socket!";
+		}
+	};
+	struct invalid_socket_exception : public std::exception
+	{
+		const char * what() const throw ()
+		{
+			return "Can't create a socket!";
+		}
+	};
+	struct data_size_exception : public std::exception
+	{
+		const char * what() const throw ()
+		{
+			return "Data size is above the maximum allowed by the buffer";
+		}
+	};
 	class EasySocket {
 	public:
-		void socketListen(std::string channelName, int port, std::function<void (std::string data)> callback) {
+		void socketListen(const std::string &channelName, int port, std::function<void (const std::string &data)> callback) {
 
 			if (sockInit() != 0) {
-				std::cerr << "Can't start socket!" << std::endl;
+				throw masesk::socket_error_exception();
 			}
 			SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
-			if (listening == INVALID_SOCKET)
+			if (listening == INVALID_SOCKET || listening == SOCKET_ERROR)
 			{
-				std::cerr << "Can't create a socket!" << std::endl;
-				return;
+				throw masesk::socket_error_exception();
 			}
 			sockaddr_in hint;
 			hint.sin_family = AF_INET;
@@ -77,8 +99,10 @@ namespace masesk {
 				int bytesReceived = recv(clientSocket, buff, BUFF_SIZE, 0);
 				if (bytesReceived == SOCKET_ERROR)
 				{
-					std::cerr << "Error in recv(). Quitting" << std::endl;
-					break;
+					throw socket_error_exception();
+				}
+				if (bytesReceived > BUFF_SIZE) {
+					throw masesk::data_size_exception();
 				}
 				if (bytesReceived > 0) {
 					callback(std::string(buff, 0, bytesReceived));
@@ -93,28 +117,31 @@ namespace masesk {
 			sockQuit();
 		}
 
-		void socketSend(std::string channelName,  std::string data) {
-			char buff[BUFF_SIZE];
+		void socketSend(const std::string &channelName,  const std::string &data) {
+			if (data.size() > BUFF_SIZE) {
+				throw masesk::data_size_exception();
+			}
+
 			if (client_sockets.find(channelName) != client_sockets.end()) {
 				SOCKET sock = client_sockets.at(channelName);
 				int sendResult = send(sock, data.c_str(), data.size() + 1, 0);
 				if (sendResult == SOCKET_ERROR)
 				{
-					std::cerr << "Can't create socket!" << std::endl;
+					throw masesk::socket_error_exception();
 				}
 			}
 		}
 
-		void socketConnect(std::string channelName, std::string ip, int port) {
+		void socketConnect(const std::string &channelName, const std::string &ip, std::uint16_t port) {
 			if (sockInit() != 0) {
-				std::cerr << "Can't start socket!" << std::endl;
+				throw masesk::socket_error_exception();
+				return;
 			}
 			SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
-			if (sock == INVALID_SOCKET)
+			if (sock == INVALID_SOCKET || sock == SOCKET_ERROR)
 			{
-				std::cerr << "Can't create socket!" << std::endl;
 				sockQuit();
-				return;
+				throw masesk::socket_error_exception();
 			}
 			sockaddr_in hint;
 			hint.sin_family = AF_INET;
@@ -123,15 +150,14 @@ namespace masesk {
 			int connResult = connect(sock, (sockaddr*)&hint, sizeof(hint));
 			if (connResult == SOCKET_ERROR)
 			{
-				std::cerr << "Can't connect to server!" << std::endl;
 				sockClose(sock);
 				sockQuit();
-				return;
+				throw socket_error_exception();
 			}
 			client_sockets[channelName] = sock;
 
 		}
-		void closeConnection(std::string channelName) {
+		void closeConnection(const std::string &channelName) {
 			if (client_sockets.find(channelName) != client_sockets.end()) {
 				SOCKET s = client_sockets.at(channelName);
 				sockClose(s);
