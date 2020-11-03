@@ -29,7 +29,7 @@ masesk::EasySocket easySocket; //or using namespace masesk;
 ### Usecase
 
 * EasySocket wraps the code for the server and client, so that a single header can be used to initialize and start a server or a client.
-```
+```cpp
 //server example 
 
 #include <iostream>
@@ -48,7 +48,7 @@ int main() {
 }
 ```
 
-```
+```cpp
 // client example
 #include <iostream>
 #include <masesk/EasySocket.hpp>
