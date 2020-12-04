@@ -47,7 +47,7 @@ namespace masesk {
 	};
 	class EasySocket {
 	public:
-		void socketListen(const std::string &channelName, int port, std::function<void (const std::string &data)> callback) {
+		void socketListenTCP(const std::string &channelName, const std::uint16_t &port, std::function<void (const std::string &data)> callback) {
 
 			if (sockInit() != 0) {
 				throw masesk::socket_error_exception();
@@ -82,13 +82,12 @@ namespace masesk {
 			memset(service, 0, NI_MAXSERV);
 			if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
 			{
-				std::cout << host << " connected on port " << service << std::endl;
+				//std::cout << host << " connected on port " << service << std::endl;
 			}
 			else
 			{
 				inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
-				std::cout << host << " connected on port " <<
-					ntohs(client.sin_port) << std::endl;
+				//std::cout << host << " connected on port " << ntohs(client.sin_port) << std::endl;
 			}
 			sockClose(listening);
 			char buff[BUFF_SIZE];
@@ -117,7 +116,7 @@ namespace masesk {
 			sockQuit();
 		}
 
-		void socketSend(const std::string &channelName,  const std::string &data) {
+		void socketSendTCP(const std::string &channelName,  const std::string &data) {
 			if (data.size() > BUFF_SIZE) {
 				throw masesk::data_size_exception();
 			}
@@ -132,7 +131,7 @@ namespace masesk {
 			}
 		}
 
-		void socketConnect(const std::string &channelName, const std::string &ip, std::uint16_t port) {
+		void socketConnectTCP(const std::string &channelName, const std::string &ip, const std::uint16_t &port) {
 			if (sockInit() != 0) {
 				throw masesk::socket_error_exception();
 				return;
@@ -163,7 +162,83 @@ namespace masesk {
 				sockClose(s);
 				sockQuit();
 			}
+		}
+		void socketSendUDP(const std::string &ip, const std::uint16_t &port, const std::string &data) {
+			if (sockInit() != 0) {
+				throw masesk::socket_error_exception();
+				return;
+			}
+			if (data.size() > BUFF_SIZE) {
+				throw masesk::data_size_exception();
+			}
+			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+			sockaddr_in servaddr;
+			memset(&servaddr, 0, sizeof(servaddr));
+			servaddr.sin_family = AF_INET;
+			servaddr.sin_port = htons(port);
+			inet_pton(AF_INET, ip.c_str(), &(servaddr.sin_addr));
+			int result = sendto(sock, data.c_str(), data.length(),
+				0, (const struct sockaddr *) &servaddr,
+				sizeof(servaddr));
+			if (result == SOCKET_ERROR) {
+				throw masesk::socket_error_exception();
+			}
 
+		}
+
+		void socketListenUDP(const std::string &channelName, const std::uint16_t &port, std::function<void(const std::string &data)> callback) {
+			if (sockInit() != 0) {
+				throw masesk::socket_error_exception();
+				return;
+			}
+			sockaddr_in servaddr;
+			servaddr.sin_family = AF_INET;
+			servaddr.sin_port = htons(port);
+#ifdef _WIN32
+			int serverSize = sizeof(servaddr);
+#else
+			unsigned int serverSize = sizeof(client);
+#endif
+			inet_pton(AF_INET, "127.0.0.1", &(servaddr.sin_addr));
+			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+			bind(sock, (sockaddr*)&servaddr, serverSize);
+
+			server_sockets[channelName] = sock;
+				char buff[BUFF_SIZE];
+				sockaddr_in clientAddr;
+				int len = sizeof(clientAddr);
+				
+				while (1) {
+					memset(buff, 0, BUFF_SIZE);
+					int bytesRecieved = recvfrom(sock, (char *)buff, BUFF_SIZE,
+						0, (struct sockaddr *) &clientAddr,
+						&len);
+					if (bytesRecieved > 0) {
+						callback(std::string(buff, 0, bytesRecieved));
+					}
+				}
+
+		}
+
+		void socketAcceptUDP(const std::string &channelName, const std::uint16_t &port) {
+			sockaddr_in servaddr;
+			servaddr.sin_family = AF_INET;
+
+
+#ifdef _WIN32
+			servaddr.sin_addr.S_un.S_addr = INADDR_ANY;
+#else
+			servaddr.sin_addr.s_addr = INADDR_ANY;
+#endif
+			servaddr.sin_port = htons(port);
+#ifdef _WIN32
+			int serverSize = sizeof(servaddr);
+#else
+			unsigned int serverSize = sizeof(client);
+#endif
+			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+			bind(sock, (sockaddr*)&servaddr, serverSize);
+			server_sockets[channelName] = sock;
 		}
 	private:
 
