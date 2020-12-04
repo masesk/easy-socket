@@ -21,35 +21,38 @@ const int SOCKET_ERROR = -1;
 #include <functional>
 #include <exception>
 
-
-namespace masesk {
+namespace masesk
+{
 	const int BUFF_SIZE = 4096;
 	struct socket_error_exception : public std::exception
 	{
-		const char * what() const throw ()
+		const char *what() const throw()
 		{
 			return "Can't start socket!";
 		}
 	};
 	struct invalid_socket_exception : public std::exception
 	{
-		const char * what() const throw ()
+		const char *what() const throw()
 		{
 			return "Can't create a socket!";
 		}
 	};
 	struct data_size_exception : public std::exception
 	{
-		const char * what() const throw ()
+		const char *what() const throw()
 		{
 			return "Data size is above the maximum allowed by the buffer";
 		}
 	};
-	class EasySocket {
+	class EasySocket
+	{
 	public:
-		void socketListenTCP(const std::string &channelName, const std::uint16_t &port, std::function<void (const std::string &data)> callback) {
+		void socketListenTCP(const std::string &channelName, const std::uint16_t &port, std::function<void(const std::string &data)> callback)
+		{
 
-			if (sockInit() != 0) {
+			if (sockInit() != 0)
+			{
 				throw masesk::socket_error_exception();
 			}
 			SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
@@ -65,7 +68,7 @@ namespace masesk {
 #else
 			hint.sin_addr.s_addr = INADDR_ANY;
 #endif
-			bind(listening, (sockaddr*)&hint, sizeof(hint));
+			bind(listening, (sockaddr *)&hint, sizeof(hint));
 			listen(listening, SOMAXCONN);
 			sockaddr_in client;
 #ifdef _WIN32
@@ -73,14 +76,14 @@ namespace masesk {
 #else
 			unsigned int clientSize = sizeof(client);
 #endif
-			SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
+			SOCKET clientSocket = accept(listening, (sockaddr *)&client, &clientSize);
 			server_sockets[channelName] = clientSocket;
-			char host[NI_MAXHOST];		
-			char service[NI_MAXSERV];	
+			char host[NI_MAXHOST];
+			char service[NI_MAXSERV];
 
 			memset(host, 0, NI_MAXHOST);
 			memset(service, 0, NI_MAXSERV);
-			if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
+			if (getnameinfo((sockaddr *)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
 			{
 				//std::cout << host << " connected on port " << service << std::endl;
 			}
@@ -100,28 +103,32 @@ namespace masesk {
 				{
 					throw socket_error_exception();
 				}
-				if (bytesReceived > BUFF_SIZE) {
+				if (bytesReceived > BUFF_SIZE)
+				{
 					throw masesk::data_size_exception();
 				}
-				if (bytesReceived > 0) {
+				if (bytesReceived > 0)
+				{
 					callback(std::string(buff, 0, bytesReceived));
 				}
-				else {
+				else
+				{
 					break;
 				}
-				
-
 			}
 			sockClose(clientSocket);
 			sockQuit();
 		}
 
-		void socketSendTCP(const std::string &channelName,  const std::string &data) {
-			if (data.size() > BUFF_SIZE) {
+		void socketSendTCP(const std::string &channelName, const std::string &data)
+		{
+			if (data.size() > BUFF_SIZE)
+			{
 				throw masesk::data_size_exception();
 			}
 
-			if (client_sockets.find(channelName) != client_sockets.end()) {
+			if (client_sockets.find(channelName) != client_sockets.end())
+			{
 				SOCKET sock = client_sockets.at(channelName);
 				int sendResult = send(sock, data.c_str(), data.size() + 1, 0);
 				if (sendResult == SOCKET_ERROR)
@@ -131,8 +138,10 @@ namespace masesk {
 			}
 		}
 
-		void socketConnectTCP(const std::string &channelName, const std::string &ip, const std::uint16_t &port) {
-			if (sockInit() != 0) {
+		void socketConnectTCP(const std::string &channelName, const std::string &ip, const std::uint16_t &port)
+		{
+			if (sockInit() != 0)
+			{
 				throw masesk::socket_error_exception();
 				return;
 			}
@@ -146,7 +155,7 @@ namespace masesk {
 			hint.sin_family = AF_INET;
 			hint.sin_port = htons(port);
 			inet_pton(AF_INET, ip.c_str(), &hint.sin_addr);
-			int connResult = connect(sock, (sockaddr*)&hint, sizeof(hint));
+			int connResult = connect(sock, (sockaddr *)&hint, sizeof(hint));
 			if (connResult == SOCKET_ERROR)
 			{
 				sockClose(sock);
@@ -154,21 +163,25 @@ namespace masesk {
 				throw socket_error_exception();
 			}
 			client_sockets[channelName] = sock;
-
 		}
-		void closeConnection(const std::string &channelName) {
-			if (client_sockets.find(channelName) != client_sockets.end()) {
+		void closeConnection(const std::string &channelName)
+		{
+			if (client_sockets.find(channelName) != client_sockets.end())
+			{
 				SOCKET s = client_sockets.at(channelName);
 				sockClose(s);
 				sockQuit();
 			}
 		}
-		void socketSendUDP(const std::string &ip, const std::uint16_t &port, const std::string &data) {
-			if (sockInit() != 0) {
+		void socketSendUDP(const std::string &ip, const std::uint16_t &port, const std::string &data)
+		{
+			if (sockInit() != 0)
+			{
 				throw masesk::socket_error_exception();
 				return;
 			}
-			if (data.size() > BUFF_SIZE) {
+			if (data.size() > BUFF_SIZE)
+			{
 				throw masesk::data_size_exception();
 			}
 			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -178,16 +191,18 @@ namespace masesk {
 			servaddr.sin_port = htons(port);
 			inet_pton(AF_INET, ip.c_str(), &(servaddr.sin_addr));
 			int result = sendto(sock, data.c_str(), data.length(),
-				0, (const struct sockaddr *) &servaddr,
-				sizeof(servaddr));
-			if (result == SOCKET_ERROR) {
+								0, (const struct sockaddr *)&servaddr,
+								sizeof(servaddr));
+			if (result == SOCKET_ERROR)
+			{
 				throw masesk::socket_error_exception();
 			}
-
 		}
 
-		void socketListenUDP(const std::string &channelName, const std::uint16_t &port, std::function<void(const std::string &data)> callback) {
-			if (sockInit() != 0) {
+		void socketListenUDP(const std::string &channelName, const std::uint16_t &port, std::function<void(const std::string &data)> callback)
+		{
+			if (sockInit() != 0)
+			{
 				throw masesk::socket_error_exception();
 				return;
 			}
@@ -197,33 +212,39 @@ namespace masesk {
 #ifdef _WIN32
 			int serverSize = sizeof(servaddr);
 #else
-			unsigned int serverSize = sizeof(client);
+			unsigned int serverSize = sizeof(servaddr);
 #endif
 			inet_pton(AF_INET, "127.0.0.1", &(servaddr.sin_addr));
 			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
-			bind(sock, (sockaddr*)&servaddr, serverSize);
+			bind(sock, (sockaddr *)&servaddr, serverSize);
 
 			server_sockets[channelName] = sock;
-				char buff[BUFF_SIZE];
-				sockaddr_in clientAddr;
-				int len = sizeof(clientAddr);
-				
-				while (1) {
-					memset(buff, 0, BUFF_SIZE);
-					int bytesRecieved = recvfrom(sock, (char *)buff, BUFF_SIZE,
-						0, (struct sockaddr *) &clientAddr,
-						&len);
-					if (bytesRecieved > 0) {
-						callback(std::string(buff, 0, bytesRecieved));
-					}
-				}
+			char buff[BUFF_SIZE];
+			sockaddr_in clientAddr;
+			servaddr.sin_port = htons(port);
+#ifdef _WIN32
+			int clientSize = sizeof(servaddr);
+#else
+			unsigned int clientSize = sizeof(servaddr);
+#endif
 
+			while (1)
+			{
+				memset(buff, 0, BUFF_SIZE);
+				int bytesRecieved = recvfrom(sock, (char *)buff, BUFF_SIZE,
+											 0, (struct sockaddr *)&clientAddr,
+											 &clientSize);
+				if (bytesRecieved > 0)
+				{
+					callback(std::string(buff, 0, bytesRecieved));
+				}
+			}
 		}
 
-		void socketAcceptUDP(const std::string &channelName, const std::uint16_t &port) {
+		void socketAcceptUDP(const std::string &channelName, const std::uint16_t &port)
+		{
 			sockaddr_in servaddr;
 			servaddr.sin_family = AF_INET;
-
 
 #ifdef _WIN32
 			servaddr.sin_addr.S_un.S_addr = INADDR_ANY;
@@ -234,14 +255,14 @@ namespace masesk {
 #ifdef _WIN32
 			int serverSize = sizeof(servaddr);
 #else
-			unsigned int serverSize = sizeof(client);
+			unsigned int serverSize = sizeof(servaddr);
 #endif
 			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
-			bind(sock, (sockaddr*)&servaddr, serverSize);
+			bind(sock, (sockaddr *)&servaddr, serverSize);
 			server_sockets[channelName] = sock;
 		}
-	private:
 
+	private:
 		std::unordered_map<std::string, SOCKET> client_sockets;
 		std::unordered_map<std::string, SOCKET> server_sockets;
 		int sockInit(void)
@@ -269,15 +290,20 @@ namespace masesk {
 
 #ifdef _WIN32
 			status = shutdown(sock, SD_BOTH);
-			if (status == 0) { status = closesocket(sock); }
+			if (status == 0)
+			{
+				status = closesocket(sock);
+			}
 #else
 			status = shutdown(sock, SHUT_RDWR);
-			if (status == 0) { status = close(sock); }
+			if (status == 0)
+			{
+				status = close(sock);
+			}
 #endif
 
 			return status;
-
 		}
 	};
-}
+} // namespace masesk
 #endif
