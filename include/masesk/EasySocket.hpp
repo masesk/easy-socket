@@ -241,27 +241,6 @@ namespace masesk
 			}
 		}
 
-		void socketAcceptUDP(const std::string &channelName, const std::uint16_t &port)
-		{
-			sockaddr_in servaddr;
-			servaddr.sin_family = AF_INET;
-
-#ifdef _WIN32
-			servaddr.sin_addr.S_un.S_addr = INADDR_ANY;
-#else
-			servaddr.sin_addr.s_addr = INADDR_ANY;
-#endif
-			servaddr.sin_port = htons(port);
-#ifdef _WIN32
-			int serverSize = sizeof(servaddr);
-#else
-			unsigned int serverSize = sizeof(servaddr);
-#endif
-			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
-			bind(sock, (sockaddr *)&servaddr, serverSize);
-			server_sockets[channelName] = sock;
-		}
-
 	private:
 		std::unordered_map<std::string, SOCKET> client_sockets;
 		std::unordered_map<std::string, SOCKET> server_sockets;
