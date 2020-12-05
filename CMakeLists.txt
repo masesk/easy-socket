@@ -35,12 +35,12 @@ install(
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-    INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
+    INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
 )
 
 install(
     EXPORT ${PROJECT_NAME}Targets
-    DESTINATION lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
+    DESTINATION lib/cmake/${PROJECT_NAME}
 )
 
 install(
@@ -48,7 +48,7 @@ install(
       "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
       "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
     DESTINATION
-      lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
+      lib/cmake/${PROJECT_NAME}
 )
 
 install(
