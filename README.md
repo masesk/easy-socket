@@ -125,24 +125,24 @@ int main() {
 
 #### Server Functions
 
-* `void socketListenTCP(std::string channelName, std::uint16_t port, std::function<void (std::string data)> callback);` 
+* `void socketListenTCP(const std::string &channelName, const std::uint16_t &port, std::function<void (const std::string &data)> callback);` 
     * channelName: string identifier of channel
     * port: integer value of port used on server side (eg. 8080)
     * function: pointer of function that will be called to handle the data when the server recieves data from the client
-* `void closeConnection(std::string channelName)`  - close socket port on server
+* `void closeConnection(const std::string &channelName)`  - close socket port on server
     * channelName: string identifier of channel
 
 
 #### Client Functions
 
-* `void socketConnectTCP(std::string channelName, std::string ip, std::uint16_t port)` - start a new connection with a server with a channel name, ip address of the server, and the port the server would be listening on.
+* `void socketConnectTCP(const std::string &channelName, const std::string &ip, const std::uint16_t &port)` - start a new connection with a server with a channel name, ip address of the server, and the port the server would be listening on.
     * channelName - string identifier of channel
     * ip - string for where the server resides (eg. 127.0.0.1 for local)
     * port - integer value of port used on server side (eg. 8080)
-* `void socketSendTCP(std::string channelName,  std::string data)` - send data to server based on channel name
+* `void socketSendTCP(const std::string &channelName,  const std::string &data)` - send data to server based on channel name
     * channelName: string identifier of channel
     * data: data to be sent through to the server on given channel
-* `void closeConnection(std::string channelName)`  - close connection with server using channel name
+* `void closeConnection(const std::string &channelName)`  - close connection with server using channel name
     * channelName: string identifier of channel
 
 
@@ -150,19 +150,21 @@ int main() {
 
 #### Receiver Functions
 
-* `void socketListenUDP(std::string channelName, std::uint16_t port, std::function<void (std::string data)> callback);` 
+* `void socketListenUDP(const std::string &channelName, const std::uint16_t &port, std::function<void (const std::string & data)> callback);` 
     * channelName: string identifier of channel
     * port: integer value of port used on server side (eg. 9090)
     * function: pointer of function that will be called to handle the data when the server recieves data from the client
+* `void closeConnection(const std::string &channelName)`  - close UDP socket port
+    * channelName: string identifier of channel
 
 #### Sender Functions
-* `void socketSendUDP(std::string ip, std::uint16_t port, std::string data)` - send data to server based on channel name
+* `void socketSendUDP(const std::string &ip, const std::uint16_t &port, const std::string &data)` - send data to server based on channel name
     * ip - string for where the server resides (eg. 127.0.0.1 for local)
     * port - integer value of port used on server side (eg. 9090)
     * data: data to be sent through to the server on given channel
 
 ## Example
-Check `test/test-server` and `test/test-client` for a working client and server example running locally.
+Check `test/test-tcp-server` / `test/test-tcp-client` / `test/test-udp-receiver` / `test/test-udp-sender` for a working client and server example running locally.
 
 ### Build Tests on Windows
 1. Open `easy-socket.sln` in Visual Studio 2017
