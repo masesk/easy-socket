@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.5)
 
 project(easy-socket VERSION 0.2.0)
 
-option(BUILD_TESTS "Turn on to build tests." ON)
+option(BUILD_EXAMPLES "Turn on to build tests." ON)
 
 set(PROJECT_COMPATIBILITY AnyNewerVersion)
 add_library(${PROJECT_NAME} INTERFACE)
@@ -58,10 +58,10 @@ install(
 
   set(${PROJECT_NAME}_VERSION ${PROJECT_VERSION} CACHE INTERNAL "")
 
-if(BUILD_TESTS)
+if(BUILD_EXAMPLES)
     # Add sub directories
-    add_subdirectory(test/test-tcp-server)
-    add_subdirectory(test/test-tcp-client)
-    add_subdirectory(test/test-udp-sender)
-    add_subdirectory(test/test-udp-receiver)
+    add_subdirectory(examples/test-tcp-server)
+    add_subdirectory(examples/test-tcp-client)
+    add_subdirectory(examples/test-udp-sender)
+    add_subdirectory(examples/test-udp-receiver)
 endif()
