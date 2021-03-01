@@ -9,6 +9,6 @@ void handleData(const std::string &data) {
 
 int main() {
 	EasySocket socketManager;
-	socketManager.socketListenUDP("test", 9090, handleData);
+	socketManager.socketListenUDP("test_udp", 9090, handleData);
 	return 0;
 }

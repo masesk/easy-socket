@@ -45,6 +45,10 @@ namespace masesk
 			return "Data size is above the maximum allowed by the buffer";
 		}
 	};
+	struct sock_save {
+		SOCKET sock;
+		sockaddr_in addr;
+	};
 	class EasySocket
 	{
 	public:
@@ -77,7 +81,9 @@ namespace masesk
 			unsigned int clientSize = sizeof(client);
 #endif
 			SOCKET clientSocket = accept(listening, (sockaddr *)&client, &clientSize);
-			server_sockets[channelName] = clientSocket;
+			sock_save tcp_save;
+			tcp_save.sock = clientSocket;
+			server_sockets[channelName] = tcp_save;
 			char host[NI_MAXHOST];
 			char service[NI_MAXSERV];
 
@@ -129,7 +135,7 @@ namespace masesk
 
 			if (client_sockets.find(channelName) != client_sockets.end())
 			{
-				SOCKET sock = client_sockets.at(channelName);
+				SOCKET sock = client_sockets.at(channelName).sock;
 				int sendResult = send(sock, data.c_str(), data.size() + 1, 0);
 				if (sendResult == SOCKET_ERROR)
 				{
@@ -162,40 +168,54 @@ namespace masesk
 				sockQuit();
 				throw socket_error_exception();
 			}
-			client_sockets[channelName] = sock;
+			client_sockets[channelName].sock = sock;
 		}
 		void closeConnection(const std::string &channelName)
 		{
 			if (client_sockets.find(channelName) != client_sockets.end())
 			{
-				SOCKET s = client_sockets.at(channelName);
+				SOCKET s = client_sockets.at(channelName).sock;
 				sockClose(s);
 				sockQuit();
 			}
 		}
-		void socketSendUDP(const std::string &ip, const std::uint16_t &port, const std::string &data)
+
+
+		void socketInitSendUDP(const std::string &channelName, const std::string &ip, const std::uint16_t &port) {
+
+			if (client_sockets.find(channelName) == client_sockets.end()) {
+				if (sockInit() != 0)
+				{
+					throw masesk::socket_error_exception();
+					return;
+				}
+				SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
+				sockaddr_in servaddr;
+				memset(&servaddr, 0, sizeof(servaddr));
+				servaddr.sin_family = AF_INET;
+				servaddr.sin_port = htons(port);
+				inet_pton(AF_INET, ip.c_str(), &(servaddr.sin_addr));
+				sock_save udp_sock;
+				udp_sock.sock = sock;
+				udp_sock.addr = servaddr;
+				client_sockets[channelName] = udp_sock;
+			}
+		}
+
+		void socketSendUDP(const std::string &channelName, const std::string &data)
 		{
-			if (sockInit() != 0)
+			if (client_sockets.find(channelName) != client_sockets.end())
 			{
-				throw masesk::socket_error_exception();
-				return;
-			}
-			if (data.size() > BUFF_SIZE)
-			{
-				throw masesk::data_size_exception();
-			}
-			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
-			sockaddr_in servaddr;
-			memset(&servaddr, 0, sizeof(servaddr));
-			servaddr.sin_family = AF_INET;
-			servaddr.sin_port = htons(port);
-			inet_pton(AF_INET, ip.c_str(), &(servaddr.sin_addr));
-			int result = sendto(sock, data.c_str(), data.length(),
-								0, (const struct sockaddr *)&servaddr,
-								sizeof(servaddr));
-			if (result == SOCKET_ERROR)
-			{
-				throw masesk::socket_error_exception();
+				sock_save udp_sock = client_sockets.at(channelName);
+				SOCKET sock = udp_sock.sock;
+				sockaddr_in servaddr = udp_sock.addr;
+				int result = sendto(sock, data.c_str(), data.length(),
+					0, (const struct sockaddr *)&servaddr,
+					sizeof(servaddr));
+				if (result == SOCKET_ERROR)
+				{
+					throw masesk::socket_error_exception();
+				}
 			}
 		}
 
@@ -218,7 +238,7 @@ namespace masesk
 			SOCKET sock = socket(AF_INET, SOCK_DGRAM, 0);
 			bind(sock, (sockaddr *)&servaddr, serverSize);
 
-			server_sockets[channelName] = sock;
+			server_sockets[channelName].sock = sock;
 			char buff[BUFF_SIZE];
 			sockaddr_in clientAddr;
 			servaddr.sin_port = htons(port);
@@ -242,8 +262,8 @@ namespace masesk
 		}
 
 	private:
-		std::unordered_map<std::string, SOCKET> client_sockets;
-		std::unordered_map<std::string, SOCKET> server_sockets;
+		std::unordered_map<std::string, sock_save> client_sockets;
+		std::unordered_map<std::string, sock_save> server_sockets;
 		int sockInit(void)
 		{
 #ifdef _WIN32
