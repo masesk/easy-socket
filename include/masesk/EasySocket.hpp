@@ -26,28 +26,28 @@ namespace masesk {
 	const int BUFF_SIZE = 4096;
 	struct socket_error_exception : public std::exception
 	{
-		const char * what() const throw ()
+		const char* what() const throw ()
 		{
 			return "Can't start socket!";
 		}
 	};
 	struct invalid_socket_exception : public std::exception
 	{
-		const char * what() const throw ()
+		const char* what() const throw ()
 		{
 			return "Can't create a socket!";
 		}
 	};
 	struct data_size_exception : public std::exception
 	{
-		const char * what() const throw ()
+		const char* what() const throw ()
 		{
 			return "Data size is above the maximum allowed by the buffer";
 		}
 	};
 	class EasySocket {
 	public:
-		void socketListen(const std::string &channelName, int port, std::function<void (const std::string &data)> callback) {
+		void socketListen(const std::string& channelName, int port, std::function<void(const std::string& data)> callback) {
 
 			if (sockInit() != 0) {
 				throw masesk::socket_error_exception();
@@ -75,8 +75,8 @@ namespace masesk {
 #endif
 			SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
 			server_sockets[channelName] = clientSocket;
-			char host[NI_MAXHOST];		
-			char service[NI_MAXSERV];	
+			char host[NI_MAXHOST];
+			char service[NI_MAXSERV];
 
 			memset(host, 0, NI_MAXHOST);
 			memset(service, 0, NI_MAXSERV);
@@ -110,21 +110,21 @@ namespace masesk {
 				else {
 					break;
 				}
-				
+
 
 			}
 			sockClose(clientSocket);
 			sockQuit();
 		}
 
-		void socketSend(const std::string &channelName,  const std::string &data) {
+		void socketSend(const std::string& channelName, const std::string& data) {
 			if (data.size() > BUFF_SIZE) {
 				throw masesk::data_size_exception();
 			}
 
 			if (client_sockets.find(channelName) != client_sockets.end()) {
 				SOCKET sock = client_sockets.at(channelName);
-				int sendResult = send(sock, data.c_str(), data.size() + 1, 0);
+				int sendResult = send(sock, data.c_str(), data.size(), 0); //if you get errors add + 1 to end of data.size()
 				if (sendResult == SOCKET_ERROR)
 				{
 					throw masesk::socket_error_exception();
@@ -132,7 +132,23 @@ namespace masesk {
 			}
 		}
 
-		void socketConnect(const std::string &channelName, const std::string &ip, std::uint16_t port) {
+		void socketRecv(const std::string& channelName, void* buffer, UINT len) {
+			if (len > BUFF_SIZE) {
+				throw masesk::data_size_exception();
+			}
+
+			if (client_sockets.find(channelName) != client_sockets.end()) {
+				SOCKET sock = client_sockets.at(channelName);
+				int recvResult = recv(sock, (char*)buffer, len, NULL);
+				if (recvResult == SOCKET_ERROR)
+				{
+					throw masesk::socket_error_exception();
+				}
+			}
+			
+		}
+
+		void socketConnect(const std::string& channelName, const std::string& ip, std::uint16_t port) {
 			if (sockInit() != 0) {
 				throw masesk::socket_error_exception();
 				return;
@@ -155,9 +171,10 @@ namespace masesk {
 				throw socket_error_exception();
 			}
 			client_sockets[channelName] = sock;
+			
 
 		}
-		void closeConnection(const std::string &channelName) {
+		void closeConnection(const std::string& channelName) {
 			if (client_sockets.find(channelName) != client_sockets.end()) {
 				SOCKET s = client_sockets.at(channelName);
 				sockClose(s);
