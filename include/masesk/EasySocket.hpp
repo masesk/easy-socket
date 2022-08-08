@@ -52,7 +52,8 @@ namespace masesk
 	class EasySocket
 	{
 	public:
-		void socketListenTCP(const std::string &channelName, const std::uint16_t &port, std::function<void(const std::string &data)> callback)
+		template <typename T, typename M>
+		void socketListenTCP(const std::string &channelName, const std::uint16_t &port, std::function<T(const M &data)> callback)
 		{
 
 			if (sockInit() != 0)
@@ -136,7 +137,7 @@ namespace masesk
 			if (client_sockets.find(channelName) != client_sockets.end())
 			{
 				SOCKET sock = client_sockets.at(channelName).sock;
-				int sendResult = send(sock, data.c_str(), data.size() + 1, 0);
+				int sendResult = send(sock, data.c_str(), (int)data.size() + 1, 0);
 				if (sendResult == SOCKET_ERROR)
 				{
 					throw masesk::socket_error_exception();
@@ -209,7 +210,7 @@ namespace masesk
 				sock_save udp_sock = client_sockets.at(channelName);
 				SOCKET sock = udp_sock.sock;
 				sockaddr_in servaddr = udp_sock.addr;
-				int result = sendto(sock, data.c_str(), data.length(),
+				int result = sendto(sock, data.c_str(), (int)data.length(),
 					0, (const struct sockaddr *)&servaddr,
 					sizeof(servaddr));
 				if (result == SOCKET_ERROR)
@@ -219,7 +220,8 @@ namespace masesk
 			}
 		}
 
-		void socketListenUDP(const std::string &channelName, const std::uint16_t &port, std::function<void(const std::string &data)> callback)
+		template <typename T, typename M>
+		void socketListenUDP(const std::string &channelName, const std::uint16_t &port, std::function<T(const std::string &M)> callback)
 		{
 			if (sockInit() != 0)
 			{
