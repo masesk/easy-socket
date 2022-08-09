@@ -5,9 +5,13 @@ VisualStudioVersion = 15.0.28010.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "easy-socket", "easy-socket.vcxproj", "{EF42A18B-14CB-46AD-A34C-30B35EF0586C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-client", "test\test-client\test-client.vcxproj", "{4FFDB01A-3314-4B28-841A-1FE8CE3516CE}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-tcp-client", "examples\test-tcp-client\test-client.vcxproj", "{4FFDB01A-3314-4B28-841A-1FE8CE3516CE}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-server", "test\test-server\test-server.vcxproj", "{1CAD60FA-43FF-4595-84B3-B72ED7F3330F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-tcp-server", "examples\test-tcp-server\test-server.vcxproj", "{1CAD60FA-43FF-4595-84B3-B72ED7F3330F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-udp-receiver", "examples\test-udp-receiver\test-udp-receiver.vcxproj", "{EE13023D-664D-4CEA-988D-35BBA91F49C4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test-udp-sender", "examples\test-udp-sender\test-udp-sender.vcxproj", "{49EC5DE8-B8C7-4081-A79C-A13E9224C175}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +45,22 @@ Global
 		{1CAD60FA-43FF-4595-84B3-B72ED7F3330F}.Release|x64.Build.0 = Release|x64
 		{1CAD60FA-43FF-4595-84B3-B72ED7F3330F}.Release|x86.ActiveCfg = Release|Win32
 		{1CAD60FA-43FF-4595-84B3-B72ED7F3330F}.Release|x86.Build.0 = Release|Win32
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Debug|x64.ActiveCfg = Debug|x64
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Debug|x64.Build.0 = Debug|x64
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Debug|x86.ActiveCfg = Debug|Win32
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Debug|x86.Build.0 = Debug|Win32
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Release|x64.ActiveCfg = Release|x64
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Release|x64.Build.0 = Release|x64
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Release|x86.ActiveCfg = Release|Win32
+		{EE13023D-664D-4CEA-988D-35BBA91F49C4}.Release|x86.Build.0 = Release|Win32
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Debug|x64.ActiveCfg = Debug|x64
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Debug|x64.Build.0 = Debug|x64
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Debug|x86.ActiveCfg = Debug|Win32
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Debug|x86.Build.0 = Debug|Win32
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Release|x64.ActiveCfg = Release|x64
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Release|x64.Build.0 = Release|x64
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Release|x86.ActiveCfg = Release|Win32
+		{49EC5DE8-B8C7-4081-A79C-A13E9224C175}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

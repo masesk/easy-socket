@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.5)
 
 project(easy-socket VERSION 0.2.0)
 
-option(EASY_SOCKET_BUILD_TESTS "Turn on to build tests." ON)
+option(BUILD_EXAMPLES "Turn on to build tests." ON)
 
 set(PROJECT_COMPATIBILITY AnyNewerVersion)
 add_library(${PROJECT_NAME} INTERFACE)
@@ -35,12 +35,12 @@ install(
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
     "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-    INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
+    INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
 )
 
 install(
     EXPORT ${PROJECT_NAME}Targets
-    DESTINATION lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
+    DESTINATION lib/cmake/${PROJECT_NAME}
 )
 
 install(
@@ -48,7 +48,7 @@ install(
       "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
       "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
     DESTINATION
-      lib/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
+      lib/cmake/${PROJECT_NAME}
 )
 
 install(
@@ -58,8 +58,10 @@ install(
 
   set(${PROJECT_NAME}_VERSION ${PROJECT_VERSION} CACHE INTERNAL "")
 
-if(EASY_SOCKET_BUILD_TESTS)
+if(BUILD_EXAMPLES)
     # Add sub directories
-    add_subdirectory(test/test-server)
-    add_subdirectory(test/test-client)
+    add_subdirectory(examples/test-tcp-server)
+    add_subdirectory(examples/test-tcp-client)
+    add_subdirectory(examples/test-udp-sender)
+    add_subdirectory(examples/test-udp-receiver)
 endif()

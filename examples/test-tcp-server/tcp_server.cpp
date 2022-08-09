@@ -9,6 +9,6 @@ void handleData(const std::string &data) {
 
 int main() {
 	EasySocket socketManager;
-	socketManager.socketListen("test", 8080, &handleData);
+	socketManager.socketListenTCP<void, std::string>("test", 8080, &handleData);
 	return 0;
 }
