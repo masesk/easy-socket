@@ -47,90 +47,149 @@ namespace masesk {
 	};
 	class EasySocket {
 	public:
-		void socketListen(const std::string &channelName, int port, std::function<void (const std::string &data)> callback) {
+	    void stop() {
+	        stopFlag.store(true);
+	        closeAllConnections();
+	        sockClose(listeningSocket); 
+	    }
+	    
+		void socketListen(const std::string& channelName, int port, std::function<void(const std::string& data)> callback) {
 
-			if (sockInit() != 0) {
-				throw masesk::socket_error_exception();
-			}
-			SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
-			if (listening == INVALID_SOCKET || listening == SOCKET_ERROR)
-			{
-				throw masesk::socket_error_exception();
-			}
-			sockaddr_in hint;
-			hint.sin_family = AF_INET;
-			hint.sin_port = htons(port);
-#ifdef _WIN32
-			hint.sin_addr.S_un.S_addr = INADDR_ANY;
-#else
-			hint.sin_addr.s_addr = INADDR_ANY;
-#endif
-			bind(listening, (sockaddr*)&hint, sizeof(hint));
-			listen(listening, SOMAXCONN);
-			sockaddr_in client;
-#ifdef _WIN32
-			int clientSize = sizeof(client);
-#else
-			unsigned int clientSize = sizeof(client);
-#endif
-			SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
-			server_sockets[channelName] = clientSocket;
-			char host[NI_MAXHOST];		
-			char service[NI_MAXSERV];	
+		    if (sockInit() != 0) {
+		        throw masesk::socket_error_exception();
+		    }
+	        listeningSocket = socket(AF_INET, SOCK_STREAM, 0);
+	        if (listeningSocket == INVALID_SOCKET || listeningSocket == SOCKET_ERROR) {
+	            throw masesk::socket_error_exception();
+	        }
 
-			memset(host, 0, NI_MAXHOST);
-			memset(service, 0, NI_MAXSERV);
-			if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
-			{
-				std::cout << host << " connected on port " << service << std::endl;
-			}
-			else
-			{
-				inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
-				std::cout << host << " connected on port " <<
-					ntohs(client.sin_port) << std::endl;
-			}
-			sockClose(listening);
-			char buff[BUFF_SIZE];
-			while (true)
-			{
-				memset(buff, 0, BUFF_SIZE);
+		    sockaddr_in hint;
+		    hint.sin_family = AF_INET;
+		    hint.sin_port = htons(port);
+		#ifdef _WIN32
+		    hint.sin_addr.S_un.S_addr = INADDR_ANY;
+		#else
+		    hint.sin_addr.s_addr = INADDR_ANY;
+		#endif
+		    bind(listeningSocket, (sockaddr*)&hint, sizeof(hint));
+		    listen(listeningSocket, SOMAXCONN);
+		    
+		    while (true) {
+		        sockaddr_in client;
+		#ifdef _WIN32
+		        int clientSize = sizeof(client);
+		#else
+		        unsigned int clientSize = sizeof(client);
+		#endif
+		        SOCKET clientSocket = accept(listeningSocket, (sockaddr*)&client, &clientSize);
 
-				int bytesReceived = recv(clientSocket, buff, BUFF_SIZE, 0);
-				if (bytesReceived == SOCKET_ERROR)
-				{
-					throw socket_error_exception();
-				}
-				if (bytesReceived > BUFF_SIZE) {
-					throw masesk::data_size_exception();
-				}
-				if (bytesReceived > 0) {
-					callback(std::string(buff, 0, bytesReceived));
-				}
-				else {
-					break;
-				}
-				
+		        if (stopFlag.load()) {
+		            break;
+		        }
 
-			}
-			sockClose(clientSocket);
-			sockQuit();
+		        if (clientSocket == SOCKET_ERROR) {
+		            // Handle the error (you might want to add some logging here)
+		            continue;
+		        }
+
+		        server_sockets[channelName] = clientSocket;
+		        char host[NI_MAXHOST];
+		        char service[NI_MAXSERV];
+
+		        memset(host, 0, NI_MAXHOST);
+		        memset(service, 0, NI_MAXSERV);
+		        if (getnameinfo((sockaddr*)&client, sizeof(client), host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0) {
+		            std::cout << host << " connected on port " << service << std::endl;
+		        }
+		        else {
+		            inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
+		            std::cout << host << " connected on port " <<
+		                ntohs(client.sin_port) << std::endl;
+		        }
+
+		        char buff[BUFF_SIZE];
+
+		        while (true) {
+		            if (stopFlag.load()) {
+		                break;
+		            }
+		            memset(buff, 0, BUFF_SIZE);
+
+		            int bytesReceived = recv(clientSocket, buff, BUFF_SIZE, 0);
+		            if (bytesReceived == SOCKET_ERROR) {
+		                // Handle the error (you might want to add some logging here)
+		                break;
+		            }
+		            if (bytesReceived > BUFF_SIZE) {
+		                throw masesk::data_size_exception();
+		            }
+		            if (bytesReceived > 0) {
+		                callback(std::string(buff, 0, bytesReceived));
+		            }
+		            else {
+		                break;
+		            }
+		        }
+		        
+		        sockClose(clientSocket);
+		    }
+
+		    sockClose(listeningSocket);
+		    sockQuit();
 		}
 
-		void socketSend(const std::string &channelName,  const std::string &data) {
-			if (data.size() > BUFF_SIZE) {
-				throw masesk::data_size_exception();
-			}
 
-			if (client_sockets.find(channelName) != client_sockets.end()) {
-				SOCKET sock = client_sockets.at(channelName);
-				int sendResult = send(sock, data.c_str(), data.size() + 1, 0);
-				if (sendResult == SOCKET_ERROR)
-				{
-					throw masesk::socket_error_exception();
-				}
-			}
+		void socketSend(const std::string &channelName, const std::string &data) {
+		    if (data.size() > BUFF_SIZE) {
+		        throw masesk::data_size_exception();
+		    }
+
+		    SOCKET sock = INVALID_SOCKET;
+
+		    // Check both client and server sockets map to find the socket associated with the channel name
+		    if (client_sockets.find(channelName) != client_sockets.end()) {
+		        sock = client_sockets.at(channelName);
+		    } else if (server_sockets.find(channelName) != server_sockets.end()) {
+		        sock = server_sockets.at(channelName);
+		    }
+
+		    if (sock != INVALID_SOCKET) {
+		        int sendResult = send(sock, data.c_str(), data.size() + 1, 0);
+		        if (sendResult == SOCKET_ERROR) {
+		            throw masesk::socket_error_exception();
+		        }
+		    } else {
+		        throw masesk::invalid_socket_exception();  // Throw exception if socket is not found
+		    }
 		}
+
+		std::string socketReceive(const std::string &channelName) {
+		    std::string receivedData;
+		    SOCKET sock = INVALID_SOCKET;
+
+		    if (client_sockets.find(channelName) != client_sockets.end()) {
+		        sock = client_sockets.at(channelName);
+		    } else if (server_sockets.find(channelName) != server_sockets.end()) {
+		        sock = server_sockets.at(channelName);
+		    }
+
+		    if (sock != INVALID_SOCKET) {
+		        char buff[BUFF_SIZE];
+		        memset(buff, 0, BUFF_SIZE);
+		        int bytesReceived = recv(sock, buff, BUFF_SIZE, 0);
+		        if (bytesReceived == SOCKET_ERROR) {
+		            throw masesk::socket_error_exception();
+		        }
+		        if (bytesReceived > 0) {
+		            receivedData.append(buff, bytesReceived);
+		        }
+		    } else {
+		        throw masesk::invalid_socket_exception();  // Throw exception if socket is not found
+		    }
+
+		    return receivedData;
+		}
+
 
 		void socketConnect(const std::string &channelName, const std::string &ip, std::uint16_t port) {
 			if (sockInit() != 0) {
@@ -165,7 +224,25 @@ namespace masesk {
 			}
 
 		}
+		void closeAllConnections() {
+		    // Close all client sockets
+		    for(auto& pair : client_sockets) {
+		        sockClose(pair.second);
+		    }
+		    client_sockets.clear(); // Remove all entries from the client sockets map
+
+		    // Close all server sockets
+		    for(auto& pair : server_sockets) {
+		        sockClose(pair.second);
+		    }
+		    server_sockets.clear(); // Remove all entries from the server sockets map
+
+		    sockQuit(); // Clean up the socket library
+		}
+
 	private:
+		SOCKET listeningSocket; 
+		std::atomic<bool> stopFlag{false};
 
 		std::unordered_map<std::string, SOCKET> client_sockets;
 		std::unordered_map<std::string, SOCKET> server_sockets;
